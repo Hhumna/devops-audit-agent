@@ -93,4 +93,4 @@ with a fake LLM, so they need no API key.
 The tools only read files; tests and linters are never executed. Cloning is shallow (200 commits).
 Free LLM tiers may hit rate limits, which slows a run but is retried automatically.
 LLM output varies between runs, so a defect found in one run may be missed in another.
-`sample_report.json` is the real, unedited output of one completed run against a small test repository with injected defects.
+`sample_report.json` is the real, unedited output of one completed run against a small test repository with injected defects.The sample report was produced with MAX_AGENT_STEPS=30.
