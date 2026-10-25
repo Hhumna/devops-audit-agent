@@ -105,7 +105,7 @@ def run_audit(repo_url: str, tools: RepoTools, llm, max_steps: int = 25, log=_lo
                     "Only 5 turns remain and inspection tools are now disabled. Record EVERY confirmed violation now, "
                     "then call finish_audit."
                 )})
-            active = schemas if (max_steps <= 8 or step <= max_steps - 6) else [RECORD_SCHEMA, FINISH_SCHEMA]
+            active = schemas
             try:
                 reply = llm.chat(_compact(messages), active)
             except LLMError as exc:
@@ -150,6 +150,8 @@ def run_audit(repo_url: str, tools: RepoTools, llm, max_steps: int = 25, log=_lo
                 elif name == "record_violation":
                     ok, message = collector.add(args)
                     result = message if ok else f"ERROR: {message}"
+                elif name in INSPECTION_TOOLS and max_steps > 8 and step > max_steps - 5:
+                    result = 'ERROR: inspection budget is over. Call record_violation for confirmed problems, then finish_audit.'
                 elif name == "finish_audit":
                     if inspected == 0:
                         result = "ERROR: inspect the repository with the tools before finishing."

@@ -34,7 +34,7 @@ _SAFE_HINTS = (
 def _assign_sub(match: re.Match) -> str:
     prefix, quote, value, _ = match.groups()
     low = value.lower()
-    if not quote and (value[0] in '([' or '(' in value or ')' in value or re.fullmatch(r'[A-Za-z_]+', value)):
+    if not quote and (value[0] in '([' or '(' in value or ')' in value or re.fullmatch(r'[A-Za-z_]+|[A-Za-z_]\w*(\.[A-Za-z_]\w*)+', value)):
         return match.group(0)
     if value.startswith(("$", "{", "%")) or any(h in low for h in _SAFE_HINTS):
         return match.group(0)
