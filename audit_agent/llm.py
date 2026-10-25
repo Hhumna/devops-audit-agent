@@ -66,6 +66,8 @@ class LLMClient:
                     raise LLMError(
                         "model or endpoint not found (HTTP 404); check LLM_MODEL and LLM_BASE_URL"
                     ) from None
+                if code == 429 and 'insufficient_quota' in str(exc):
+                    raise LLMError('OpenAI quota exhausted (insufficient_quota). Add billing credit at platform.openai.com, then retry.') from None
                 if code in RETRYABLE_STATUS or code >= 500:
                     last = f"HTTP {code}"
                 else:
