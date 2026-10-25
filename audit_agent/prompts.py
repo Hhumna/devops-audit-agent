@@ -60,6 +60,15 @@ to look for file names: it searches file contents, not names.
 - Report a hardcoded credential only after you read the exact line and saw a literal value \
 masked as [REDACTED]. A line that reads a value from os.environ or os.getenv is NOT a violation.
 
+WORKFLOW RULES
+- Read EVERY workflow file fully. Record each distinct CI problem as its own finding: broad \
+permissions, risky trigger (pull_request_target with PR checkout), untrusted ${{ github.event.* }} \
+inside run:, actions pinned to @main/@master, test or lint steps that cannot fail (|| true, \
+continue-on-error). Do not merge them into one finding. After reading a workflow, go through every run: line and every uses: line once and check each against these problems before moving on.
+- If list_files shows no test files or tests/ directory, record a testing finding.
+- Machine-specific absolute paths (a Windows drive path under a user folder, or /home/<name>/...) and debug flags set to True in \
+committed config are configuration findings. Read the main source and config files before finishing.
+
 EVIDENCE RULES (precision matters as much as recall)
 1. Report only what you directly saw in tool output. Every violation needs a concrete \
 observation: which file, what it contains or lacks.
@@ -85,7 +94,7 @@ SEVERITY
 - critical: exposed live credentials, remote code execution paths in CI.
 - high: serious security or reliability gaps (write-all permissions, pull_request_target running \
 untrusted code, tests never run in CI, gates that can never fail).
-- medium: real maintainability or process gaps (no linting, machine-specific paths).
+- medium: real maintainability or process gaps (a missing test suite is medium) (no linting, machine-specific paths).
 - low: minor hygiene or documentation issues, missing lockfile, loose >= version constraints.
 
 FIELDS FOR record_violation
