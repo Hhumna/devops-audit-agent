@@ -20,7 +20,7 @@ OLD_RESULT_CHARS = 500
 RECORD_SCHEMA = {"type": "function", "function": {
     "name": "record_violation",
     "description": (
-        "Record ONE confirmed DevOps violation backed by evidence you saw in tool output. "
+        "Record ONE confirmed DevOps violation backed by evidence you saw in tool output. One call per distinct defect: never put several problems (for example || true and continue-on-error) in one record. "
         "Omit file and line for absences or repository-wide problems."
     ),
     "parameters": {"type": "object", "properties": {

@@ -1,0 +1,165 @@
+{
+  "repository": "https://github.com/Hhumna/test-defects",
+  "violations": [
+    {
+      "rule_id": "SEC-001",
+      "category": "security",
+      "severity": "critical",
+      "file": ".env",
+      "line": 1,
+      "description": "Hardcoded credential in .env",
+      "evidence": ".env file contains DB_PASSWORD=[REDACTED] on line 1",
+      "recommendation": "Remove .env from repository, store credentials in GitHub Secrets and load at runtime"
+    },
+    {
+      "rule_id": "HYG-001",
+      "category": "repository_hygiene",
+      "severity": "low",
+      "file": null,
+      "line": null,
+      "description": "Missing .gitignore file",
+      "evidence": "list_files output shows no .gitignore in repository root",
+      "recommendation": "Create a .gitignore that excludes .env, __pycache__, *.pyc, and other generated files"
+    },
+    {
+      "rule_id": "HYG-002",
+      "category": "repository_hygiene",
+      "severity": "low",
+      "file": "src/cache.pyc",
+      "line": 1,
+      "description": "Tracked compiled bytecode file",
+      "evidence": "src/cache.pyc is present in the repository and tracked by git",
+      "recommendation": "Remove the .pyc file from version control and add *.pyc to .gitignore"
+    },
+    {
+      "rule_id": "SEC-002",
+      "category": "security",
+      "severity": "high",
+      "file": ".github/workflows/ci.yml",
+      "line": 3,
+      "description": "Workflow uses pull_request_target trigger",
+      "evidence": "ci.yml defines 'on: pull_request_target' at line 3, allowing untrusted PR code to run with elevated permissions",
+      "recommendation": "Switch to 'pull_request' trigger and use a safe checkout of the repository without untrusted code execution"
+    },
+    {
+      "rule_id": "TEST-001",
+      "category": "testing",
+      "severity": "medium",
+      "file": null,
+      "line": null,
+      "description": "No test suite present",
+      "evidence": "list_files output shows no tests/ directory or test files",
+      "recommendation": "Add a tests/ directory with unit/integration tests and ensure CI runs them"
+    },
+    {
+      "rule_id": "SEC-003",
+      "category": "security",
+      "severity": "high",
+      "file": ".github/workflows/ci.yml",
+      "line": 4,
+      "description": "Workflow grants write-all permissions",
+      "evidence": "ci.yml sets 'permissions: write-all' at line 4, giving all token scopes to the job",
+      "recommendation": "Limit permissions to only what is needed, e.g., contents: read, pull-requests: write if necessary"
+    },
+    {
+      "rule_id": "SEC-004",
+      "category": "security",
+      "severity": "high",
+      "file": ".github/workflows/ci.yml",
+      "line": 9,
+      "description": "Unpinned third‑party action",
+      "evidence": "ci.yml uses actions/checkout@main at line 9, which points to a mutable tag",
+      "recommendation": "Pin the checkout action to a specific SHA or a released version tag, e.g., actions/checkout@v3"
+    },
+    {
+      "rule_id": "SEC-005",
+      "category": "security",
+      "severity": "critical",
+      "file": "src/app.py",
+      "line": 1,
+      "description": "Hardcoded credential in source code",
+      "evidence": "src/app.py line 1 assigns DB_PASSWORD = '[REDACTED]'",
+      "recommendation": "Remove hardcoded credentials and load them from environment variables or secret management"
+    },
+    {
+      "rule_id": "CI-001",
+      "category": "ci_cd",
+      "severity": "high",
+      "file": ".github/workflows/ci.yml",
+      "line": 13,
+      "description": "Test step cannot fail due to '|| true' and continue-on-error",
+      "evidence": "ci.yml line 13 runs 'pytest || true' and line 14 sets 'continue-on-error: true', preventing failures from breaking the workflow",
+      "recommendation": "Remove '|| true' and 'continue-on-error' so that test failures cause the CI job to fail"
+    },
+    {
+      "rule_id": "HYG-003",
+      "category": "repository_hygiene",
+      "severity": "low",
+      "file": null,
+      "line": null,
+      "description": "Missing README file",
+      "evidence": "list_files output shows no README.md or README file in repository root",
+      "recommendation": "Add a README.md describing the project, setup, and usage"
+    },
+    {
+      "rule_id": "CFG-001",
+      "category": "configuration",
+      "severity": "medium",
+      "file": "src/app.py",
+      "line": 2,
+      "description": "Machine-specific absolute path in source",
+      "evidence": "src/app.py line 2 sets DATA_DIR = 'C:\\Users\\ali\\Desktop\\data' which is a hard‑coded local Windows path",
+      "recommendation": "Replace with a relative path or configurable environment variable"
+    },
+    {
+      "rule_id": "DEP-001",
+      "category": "dependency_management",
+      "severity": "low",
+      "file": "requirements.txt",
+      "line": 1,
+      "description": "Unpinned dependencies in requirements.txt",
+      "evidence": "requirements.txt lists 'flask' and 'requests' without version specifications",
+      "recommendation": "Specify exact or version‑pinned dependencies, e.g., flask==2.2.5, requests>=2.28,<3.0"
+    },
+    {
+      "rule_id": "DEP-002",
+      "category": "dependency_management",
+      "severity": "low",
+      "file": null,
+      "line": null,
+      "description": "Missing lockfile for requirements",
+      "evidence": "CI workflow installs dependencies from requirements.txt but repository lacks a pip lockfile (e.g., requirements.txt.lock or Pipfile.lock)",
+      "recommendation": "Generate and commit a lockfile (e.g., pip freeze > requirements.txt.lock) and have CI install from it to ensure reproducible builds"
+    },
+    {
+      "rule_id": "SEC-006",
+      "category": "security",
+      "severity": "high",
+      "file": ".github/workflows/ci.yml",
+      "line": 15,
+      "description": "Untrusted github.event data used in run command",
+      "evidence": "ci.yml line 15 runs 'echo \"${{ github.event.pull_request.title }}\"' directly, exposing PR title to the runner without sanitization",
+      "recommendation": "Avoid using untrusted event data in run steps or sanitize it before use"
+    },
+    {
+      "rule_id": "CFG-002",
+      "category": "configuration",
+      "severity": "medium",
+      "file": "src/app.py",
+      "line": 3,
+      "description": "Debug flag enabled in source code",
+      "evidence": "src/app.py line 3 sets DEBUG = True",
+      "recommendation": "Set DEBUG=False by default and control via environment variable for production"
+    },
+    {
+      "rule_id": "CFG-003",
+      "category": "configuration",
+      "severity": "medium",
+      "file": ".env",
+      "line": 2,
+      "description": "Debug flag enabled in .env",
+      "evidence": ".env line 2 sets DEBUG=true, enabling debug mode in production environments",
+      "recommendation": "Set DEBUG=false by default and control via environment variable only in development"
+    }
+  ]
+}

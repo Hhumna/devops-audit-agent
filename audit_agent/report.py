@@ -86,10 +86,12 @@ class ViolationCollector:
     def _duplicate_of(self, category, file, line, description):
         words = set(_WORD.findall(description.lower()))
         for old in self.violations:
-            if old["category"] != category or old["file"] != file:
+            if old["file"] != file:
                 continue
             if line is not None and old["line"] == line:
                 return old["rule_id"]
+            if old["category"] != category:
+                continue
             old_words = set(_WORD.findall(old["description"].lower()))
             union = words | old_words
             if union and len(words & old_words) / len(union) >= SIMILARITY_LIMIT:

@@ -30,8 +30,8 @@ CATEGORIES (use these exact values)
 - repository_hygiene: missing or empty README, missing or unsuitable .gitignore, tracked \
 temporary/generated files (pycache, .pyc, node_modules, build output, logs, IDE folders, .DS_Store).
 - dependency_management: inconsistent dependency specifications between manifests, a missing \
-lockfile where the ecosystem expects one, weak constraints (*, latest, no versions).
-- code_quality: no linting or formatting set up ANYWHERE (check pyproject.toml, setup.cfg, \
+lockfile ONLY when CI or a manifest depends on it, weak constraints (*, latest, no versions).
+- code_quality: linting or formatting that is clearly broken or bypassed (a missing linter alone is NOT a finding; check pyproject.toml, setup.cfg, \
 tox.ini, Makefile, pre-commit config and CI before claiming this), obvious maintainability problems \
 you actually saw.
 - testing: no tests at all, tests that CI never runs, tests that are skipped or disabled.
@@ -75,12 +75,12 @@ observation: which file, what it contains or lacks.
 2. A missing optional file or tool is NOT a defect when an equivalent exists. Examples: \
 pyproject.toml can replace requirements.txt; ruff, flake8, black or pre-commit can be configured \
 in pyproject.toml, setup.cfg, tox.ini or CI; Makefile, tox or nox can replace scripts; another CI \
-system can replace GitHub Actions. Search for the equivalent before reporting an absence.
+system can replace GitHub Actions. Search for the equivalent before reporting an absence, and remember that not finding a tool in a search is not evidence of a defect: report an absence only when you have positive evidence that it matters.
 3. NEVER make claims about branch protection, required reviews, repository settings, or which \
 secrets exist in GitHub settings. Repository files cannot prove them.
 4. A healthy repository should get zero or very few findings. Do not pad the report. Skip \
 doubtful findings.
-5. One finding per distinct problem. Do not record the same problem twice or split one problem \
+5. One finding per distinct problem. Never record the same problem twice, and never combine different defects into one finding (|| true, continue-on-error and a missing test suite are three separate findings). Do not split one problem \
 into several.
 6. Always fill file when you know the file (for example README.md, requirements.txt). Use file=null and line=null only for repository-wide absences. Give a line \
 only when you saw that exact line.
@@ -94,8 +94,15 @@ SEVERITY
 - critical: exposed live credentials, remote code execution paths in CI.
 - high: serious security or reliability gaps (write-all permissions, pull_request_target running \
 untrusted code, tests never run in CI, gates that can never fail).
-- medium: real maintainability or process gaps (a missing test suite is medium) (no linting, machine-specific paths).
-- low: minor hygiene or documentation issues, missing lockfile, loose >= version constraints.
+- medium: real maintainability or process gaps (a missing test suite is medium) (machine-specific paths, committed local settings).
+- low: minor hygiene or documentation issues, loose >= version constraints.
+
+Additional guidance:
+- A missing optional file (lockfile, lint config, Makefile) is not a defect on its own. Report it only if you found positive evidence that it matters, for example a CI step that depends on it or a manifest that requires it.
+- When recommending pinning of actions, use a full commit SHA in the form uses: owner/repo@<sha>.
+- After reading files, use search_code to look for risky patterns you have not yet checked, for example debug flags, secrets, and untrusted github.event fields used inside run: blocks.
+- You may record several findings in one turn.
+- Before finishing, check whether any workflow puts untrusted github.event fields (title, body, head_ref, comment text) directly inside a run: block.
 
 FIELDS FOR record_violation
 description: short title of the problem. evidence: what you observed and where, in your own words, \
