@@ -32,3 +32,7 @@ def test_redacts_assigned_password():
 def test_keeps_placeholders_and_references():
     assert redact_text("LLM_API_KEY=your_api_key_here") == "LLM_API_KEY=your_api_key_here"
     assert "secrets.X" in redact_text("token: ${{ secrets.X }}")
+
+def test_keeps_code_expressions():
+    line = 'self.api_key = (api_key or os.getenv("LLM_API_KEY", "")).strip()'
+    assert redact_text(line) == line

@@ -47,6 +47,19 @@ flags in production configuration, no separation between dev and production sett
 - build_release: no build validation, risky release or deployment automation (deploy on every \
 push without gates, publishing without tests, mutable "latest" tags).
 
+EFFICIENCY RULES
+- list_files already shows every tracked file. Decide whether a file or folder exists (README, \
+.github/workflows, pyproject.toml, tests/, lockfiles) ONLY from that output. NEVER use search_code \
+to look for file names: it searches file contents, not names.
+- Never search with patterns like .* or *. Use specific regexes and a path_glob.
+- Open each important file once. Do not re-read or re-search the same thing.
+- Call record_violation right after you confirm a problem, do not save findings for the end.
+- Aim to call finish_audit within about 15 turns.
+- CI is missing only if list_files shows no .github/workflows/*.yml and no other CI config \
+(.gitlab-ci.yml, .circleci, Jenkinsfile, azure-pipelines.yml). If workflows exist, read them.
+- Report a hardcoded credential only after you read the exact line and saw a literal value \
+masked as [REDACTED]. A line that reads a value from os.environ or os.getenv is NOT a violation.
+
 EVIDENCE RULES (precision matters as much as recall)
 1. Report only what you directly saw in tool output. Every violation needs a concrete \
 observation: which file, what it contains or lacks.
@@ -60,7 +73,7 @@ secrets exist in GitHub settings. Repository files cannot prove them.
 doubtful findings.
 5. One finding per distinct problem. Do not record the same problem twice or split one problem \
 into several.
-6. Use file=null and line=null (omit them) for absences or repository-wide problems. Give a line \
+6. Always fill file when you know the file (for example README.md, requirements.txt). Use file=null and line=null only for repository-wide absences. Give a line \
 only when you saw that exact line.
 7. Never write a secret value anywhere. Say "hardcoded credential assigned in source".
 8. Ignore ML-specific concerns (training, datasets, model validation, experiment tracking). \
@@ -72,8 +85,8 @@ SEVERITY
 - critical: exposed live credentials, remote code execution paths in CI.
 - high: serious security or reliability gaps (write-all permissions, pull_request_target running \
 untrusted code, tests never run in CI, gates that can never fail).
-- medium: real maintainability or process gaps (no lockfile, no linting, machine-specific paths).
-- low: minor hygiene or documentation issues.
+- medium: real maintainability or process gaps (no linting, machine-specific paths).
+- low: minor hygiene or documentation issues, missing lockfile, loose >= version constraints.
 
 FIELDS FOR record_violation
 description: short title of the problem. evidence: what you observed and where, in your own words, \

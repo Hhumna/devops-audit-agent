@@ -13,8 +13,8 @@ from tools import TOOL_SCHEMAS, RepoTools, execute_tool
 
 INSPECTION_TOOLS = {"list_files", "read_file", "search_code", "git_log"}
 MAX_NUDGES = 2
-KEEP_RECENT_TOOL_RESULTS = 8
-OLD_RESULT_CHARS = 1200
+KEEP_RECENT_TOOL_RESULTS = 3
+OLD_RESULT_CHARS = 500
 
 RECORD_SCHEMA = {"type": "function", "function": {
     "name": "record_violation",
@@ -25,8 +25,8 @@ RECORD_SCHEMA = {"type": "function", "function": {
     "parameters": {"type": "object", "properties": {
         "category": {"type": "string", "enum": list(CATEGORIES)},
         "severity": {"type": "string", "enum": list(SEVERITIES)},
-        "file": {"type": "string", "description": "Repo-relative path of the affected file."},
-        "line": {"type": "integer", "description": "Line number you actually saw."},
+        "file": {"type": ["string", "null"], "description": "Repo-relative path of the affected file."},
+        "line": {"type": ["integer", "null"], "description": "Line number you actually saw."},
         "description": {"type": "string", "description": "Short title of the problem."},
         "evidence": {"type": "string",
                      "description": "What you observed and where. Never include secret values."},
@@ -92,17 +92,27 @@ def run_audit(repo_url: str, tools: RepoTools, llm, max_steps: int = 25, log=_lo
     trace: list[dict] = []
     inspected = 0
     nudges = 0
+    bad_calls = 0
     summary = ""
     stop_reason = "step limit reached"
     step = 0
     try:
         for step in range(1, max_steps + 1):
-            if max_steps > 3 and step == max_steps - 2:
+            if max_steps > 3 and step == max_steps - 5:
                 messages.append({"role": "user", "content": (
-                    "Only 3 turns remain. Record any confirmed violations now, "
+                    "Only 5 turns remain and inspection tools are now disabled. Record EVERY confirmed violation now, "
                     "then call finish_audit."
                 )})
-            reply = llm.chat(_compact(messages), schemas)
+            active = schemas if (max_steps <= 8 or step <= max_steps - 6) else [RECORD_SCHEMA, FINISH_SCHEMA]
+            try:
+                reply = llm.chat(_compact(messages), active)
+            except LLMError as exc:
+                if ('tool_use_failed' in str(exc) or 'output_parse_failed' in str(exc)) and bad_calls < 4:
+                    bad_calls += 1
+                    log(f'[step {step}] invalid tool call from model; retrying')
+                    messages.append({'role': 'user', 'content': 'Your last tool call was invalid or that tool is not available right now. Call only an available tool, using its exact name.'})
+                    continue
+                raise
             entry = message_to_dict(reply)
             messages.append(entry)
             thought = redact_text(entry["content"]).strip()
@@ -138,7 +148,7 @@ def run_audit(repo_url: str, tools: RepoTools, llm, max_steps: int = 25, log=_lo
                         summary = redact_text(str(args.get("summary", "")))[:500]
                         result = "Audit finished."
                 else:
-                    result = execute_tool(tools, name, args)
+                    result = ('ERROR: search pattern too broad; use a specific regex.' if name == 'search_code' and str(args.get('pattern', '')).strip() in ('.*', '*', '.', '') else execute_tool(tools, name, args))
                     if name in INSPECTION_TOOLS:
                         inspected += 1
                 messages.append({"role": "tool", "tool_call_id": call["id"], "content": result})
