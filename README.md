@@ -22,6 +22,16 @@ Copy `.env.example` to `.env` and fill it in:
 - `MAX_AGENT_STEPS`: maximum LLM turns (default 25)
 - `LLM_TIMEOUT_SECONDS`: per-request timeout (default 60)
 
+Example provider settings (any OpenAI-compatible endpoint works):
+
+    # Gemini
+    LLM_MODEL=gemini-2.5-flash
+    LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
+
+    # Groq
+    LLM_MODEL=openai/gpt-oss-120b
+    LLM_BASE_URL=https://api.groq.com/openai/v1
+
 ## Usage
 
     python agent.py --repo https://github.com/<owner>/<repo> --output report.json
@@ -39,6 +49,12 @@ errors). A clear message is printed to stderr in every error case.
 
 Severity is one of critical, high, medium, low. `file` and `line` are null when not applicable.
 An empty `violations` list is valid. Secret values are never written to the report.
+
+## Agent cycle
+
+Observe -> Reason -> Select Tool -> Execute Tool -> Interpret Results -> Report. At every turn the LLM looks at what it has seen so far and chooses the next tool call itself, including follow-up calls (for example searching for a pattern after reading a workflow file). Tool outputs are fed back to the LLM, which interprets them and records findings with `record_violation`. The run ends when the LLM calls `finish_audit` or the step budget is reached.
+
+Tools available to the LLM: `list_files`, `read_file`, `search_code`, `git_log` (inspection), `record_violation` and `finish_audit` (reporting).
 
 ## Architecture
 
@@ -76,3 +92,5 @@ with a fake LLM, so they need no API key.
 
 The tools only read files; tests and linters are never executed. Cloning is shallow (200 commits).
 Free LLM tiers may hit rate limits, which slows a run but is retried automatically.
+LLM output varies between runs, so a defect found in one run may be missed in another.
+`sample_report.json` is the real, unedited output of one completed run against a small test repository with injected defects.
