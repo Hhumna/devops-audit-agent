@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import sys
+import time
 from dataclasses import dataclass, field
 
 from audit_agent.llm import LLMError, message_to_dict
@@ -93,6 +94,7 @@ def run_audit(repo_url: str, tools: RepoTools, llm, max_steps: int = 25, log=_lo
     inspected = 0
     nudges = 0
     bad_calls = 0
+    shrinks = 0
     summary = ""
     stop_reason = "step limit reached"
     step = 0
@@ -107,6 +109,14 @@ def run_audit(repo_url: str, tools: RepoTools, llm, max_steps: int = 25, log=_lo
             try:
                 reply = llm.chat(_compact(messages), active)
             except LLMError as exc:
+                if 'HTTP 413' in str(exc) and shrinks < 3:
+                    shrinks += 1
+                    log(f'[step {step}] request too large; shortening history and waiting')
+                    for old in messages[:-4]:
+                        if old.get('role') == 'tool' and len(old['content']) > 200:
+                            old['content'] = old['content'][:200] + ' ... [shortened]'
+                    time.sleep(30)
+                    continue
                 if ('tool_use_failed' in str(exc) or 'output_parse_failed' in str(exc)) and bad_calls < 4:
                     bad_calls += 1
                     log(f'[step {step}] invalid tool call from model; retrying')

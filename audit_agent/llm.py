@@ -25,7 +25,7 @@ def _env_float(name: str, default: float) -> float:
 class LLMClient:
     """Thin wrapper around the plain OpenAI SDK (works with Gemini's compatible endpoint)."""
 
-    def __init__(self, api_key=None, model=None, base_url=None, timeout=None, max_retries=4):
+    def __init__(self, api_key=None, model=None, base_url=None, timeout=None, max_retries=8):
         self.api_key = (api_key or os.getenv("LLM_API_KEY", "")).strip()
         self.model = (model or os.getenv("LLM_MODEL", "")).strip()
         raw_url = base_url if base_url is not None else os.getenv("LLM_BASE_URL", "")
